@@ -1,12 +1,5 @@
-{--
-Cronograma:
-  implementar Pair
-  parser com o Happy
-  
-
-Perguntas: 
---}
-
+module Interpreter where
+import Parser 
 import Language.Haskell.TH (Exp)
  
 -- Árvore de sintaxe abstrata
