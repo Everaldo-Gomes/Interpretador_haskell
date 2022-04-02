@@ -9,32 +9,37 @@ import Data.Char
 
 
 %token 
-  true		  { TokenTrue   }
-  false     { TokenFalse  }
-  num       { TokenNum $$ }
+  true	    { TokenTrue    }
+  false     { TokenFalse   }
+  num       { TokenNum $$  }
   fst       { TokenFst     }	
   snd       { TokenSnd     }	
-  if 		    { TokenIf     }
-  else	    { TokenElse   }						
-  '+'       { TokenPlus   }
-  '&'       { TokenAnd    }	
-  ','       { TokenComma  }
-  '('       { TokenOB     }
-  ')'       { TokenCB     }	
-  '{'       { TokenOK     }
-  '}'       { TokenCK     }											
+  if 	    { TokenIf      }
+  else	    { TokenElse    }
+  list	    { TokenList    }
+  '+'       { TokenPlus    }
+  '&'       { TokenAnd     }	
+  ','       { TokenComma   }
+  '('       { TokenOB      }
+  ')'       { TokenCB      }	
+  '{'       { TokenOK      }
+  '}'       { TokenCK      }
+  '['       { TokenOSB     }
+  ']'       { TokenCSB     }
 %%
 
+-- Lista de termos  
+  Exp	: true 		                                { BTrue         }
+	| false                                         { BFalse        }
+        | num                                           { Num $1        }
+        | Exp '+' Exp                                   { Add $1 $3     }
+	| Exp '&' Exp                                   { And $1 $3     }		
+        | '(' Exp ',' Exp ')'                           { NewPair $2 $4 }
+        | fst Exp                                       { FirstPair $2  } 
+        | snd Exp                                       { LastPair $2   }
+        | if '(' Exp ')' '{' Exp '}' else '{' Exp '}'   { If $3 $6 $10  }
+        | list '[' Exp ',' Exp ']'                      { NewList $3 $5 }
 
-Exp	: true 		                                      { BTrue }
-		| false                                         { BFalse }
-    | num                                           { Num $1 }
-    |	Exp '+' Exp                                   { Add $1 $3 }
-		| Exp '&' Exp                                   { And $1 $3 }		
-    | '(' Exp ',' Exp ')'                           { NewPair $2 $4 }
-    | fst Exp                                       { FirstPair $2 } --ler recursivo e second
-    | snd Exp                                       { LastPair $2 } --ler recursivo e second
-    | if '(' Exp ')' '{' Exp '}' else '{' Exp '}'	  { If $3 $6 $10 }
 
 
 {
@@ -43,19 +48,22 @@ parseError _ = error "Syntax error: sequência de caracteres inválida!"
 	
 
 data Token = TokenTrue
-		|		TokenFalse
-		|		TokenNum Int
-		|		TokenPlus
-		|		TokenAnd
-    |   TokenOB
-    |   TokenCB
-    |   TokenOK
-    |   TokenCK
-    |   TokenComma
-    |   TokenFst
-    |   TokenSnd
-    |   TokenIf
-    |   TokenElse
+		| TokenFalse
+		| TokenNum Int
+		| TokenPlus
+		| TokenAnd
+		| TokenOB
+		| TokenCB
+		| TokenOK
+		| TokenCK
+                | TokenOSB
+                | TokenCSB
+		| TokenComma
+		| TokenFst
+		| TokenSnd
+		| TokenIf
+		| TokenElse
+                | TokenList
 
 
 -- Árvore de sintaxe abstrata
@@ -68,6 +76,7 @@ data Expr = BTrue
     | Add Expr Expr
     | And Expr Expr
     | If Expr Expr Expr
+    | NewList Expr Expr
     deriving (Show, Eq)
 
 
@@ -84,6 +93,9 @@ lexer ('(':cs) = TokenOB : lexer cs
 lexer (')':cs) = TokenCB : lexer cs
 lexer ('{':cs) = TokenOK : lexer cs
 lexer ('}':cs) = TokenCK : lexer cs
+lexer ('[':cs) = TokenOSB : lexer cs
+lexer (']':cs) = TokenCSB : lexer cs
+
 lexer _ = error "Lexical error: caracter inválido!"
 
 -- Lê um token numérico 
@@ -98,10 +110,11 @@ lexAnd cs = case span isAlpha cs of
 
 -- Lê um token de palavra reservada
 lexKeyWord cs = case span isAlpha cs of
-    ("true", rest)  -> TokenTrue : lexer rest
+    ("true",  rest) -> TokenTrue  : lexer rest
     ("false", rest) -> TokenFalse : lexer rest
-    ("fst", rest)	  -> TokenFst : lexer rest
-    ("snd", rest)	  -> TokenSnd : lexer rest
-    ("if", rest)	  -> TokenIf : lexer rest
-    ("else", rest)  -> TokenElse : lexer rest
+    ("fst",   rest) -> TokenFst   : lexer rest
+    ("snd",   rest) -> TokenSnd   : lexer rest
+    ("if",    rest) -> TokenIf    : lexer rest
+    ("else",  rest) -> TokenElse  : lexer rest
+    ("list",  rest) -> TokenList  : lexer rest
 }
