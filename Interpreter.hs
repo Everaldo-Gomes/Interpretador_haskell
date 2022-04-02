@@ -1,24 +1,11 @@
 module Interpreter where
 import Parser 
 import Language.Haskell.TH (Exp)
- 
--- Árvore de sintaxe abstrata
-data Expr = BTrue 
-    | BFalse
-    | Num Int
-    | FirstPair NewPair
-    | LastPair NewPair
-    | Add Expr Expr
-    | And Expr Expr
-    | If Expr Expr Expr
-    deriving Show
 
 data Ty = TNum 
     | TBool 
+    | TPair Ty Ty
     deriving Show
-
-data NewPair = NewPair Expr Expr
-  deriving Show
 
 -- Função que avalia um passo de execução
 step :: Expr -> Maybe  Expr
@@ -43,21 +30,33 @@ step (If e1 e2 e3) = case (step e1) of
                        Just e' -> Just (If e' e2 e3)
                        Nothing -> Nothing
 
-step (FirstPair (NewPair e1 e2)) = step e1
-step (LastPair (NewPair e1 e2)) = step e2
-
-
+step (FirstPair (NewPair e1 e2)) = Just e1
+step (LastPair (NewPair e1 e2)) = Just e2
 step e = Just e
+
+-- Função que avalia uma expressão até apresentar um
+-- resultado ou gerar um erro
+-- Não precisa alterar
+----------------------------------------------------
+eval :: Expr -> Maybe Expr
+eval e = case (step e) of 
+           Just e' -> if (e == e') then
+                        Just e
+                      else
+                        eval e'
+           _ -> error "Semantic error: erro avaliando expressão!" 
   
-
-
-         
 
 -- Função que verifica o tipo de uma expressão
 typeof :: Expr -> Maybe Ty
 typeof BTrue = Just TBool 
 typeof BFalse = Just TBool 
 typeof (Num _) = Just  TNum
+typeof (NewPair e1 e2) = case (typeof e1) of
+                        Just t1 -> case (typeof e2) of
+                                        Just t2 -> Just (TPair t1 t2)
+                                        _         -> Nothing 
+                        _         -> Nothing
 typeof (Add e1 e2) = case (typeof e1) of
                         Just TNum -> case (typeof e2) of
                                         Just TNum -> Just TNum 
@@ -81,12 +80,29 @@ typeof (FirstPair (NewPair e1 e2)) =
   case (typeof e1, typeof e2) of
     (Just TNum, Just TNum)   -> Just TNum
     (Just TBool, Just TBool) -> Just TBool
+    (Just TNum, Just TBool) -> Just TNum
+    (Just TBool, Just TNum) -> Just TBool
     _                        -> Nothing
 
 typeof (LastPair (NewPair e1 e2)) =
   case (typeof e1, typeof e2) of
     (Just TNum, Just TNum)   -> Just TNum
     (Just TBool, Just TBool) -> Just TBool
+    (Just TNum, Just TBool)  -> Just TBool
+    (Just TBool, Just TNum)  -> Just TNum
     _                        -> Nothing
   
   
+-- Função que faz a verificação de tipos
+-- Não precisa alterar
+----------------------------------------
+typecheck :: Expr -> Expr
+typecheck e = case (typeof e) of 
+                Just _ -> e
+                _ -> error "Type error: erro na verificação de tipos!"
+
+
+------------------------------------------
+-- Ler os códigos e chamar o interpretador
+------------------------------------------
+main = getContents >>= print . eval . typecheck . parser . lexer 
