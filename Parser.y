@@ -9,12 +9,12 @@ import Data.Char
 
 
 %token 
-  true		  { TokenTrue   }
+  true	    { TokenTrue   }
   false     { TokenFalse  }
   num       { TokenNum $$ }
-  fst       { TokenFst     }	
-  snd       { TokenSnd     }	
-  if 		    { TokenIf     }
+  fst       { TokenFst    }	
+  snd       { TokenSnd    }	
+  if 	    { TokenIf     }
   else	    { TokenElse   }						
   '+'       { TokenPlus   }
   '&'       { TokenAnd    }	
@@ -26,15 +26,15 @@ import Data.Char
 %%
 
 
-Exp	: true 		                                      { BTrue }
-		| false                                         { BFalse }
-    | num                                           { Num $1 }
-    |	Exp '+' Exp                                   { Add $1 $3 }
-		| Exp '&' Exp                                   { And $1 $3 }		
-    | '(' Exp ',' Exp ')'                           { NewPair $2 $4 }
-    | fst Exp                                       { FirstPair $2 } --ler recursivo e second
-    | snd Exp                                       { LastPair $2 } --ler recursivo e second
-    | if '(' Exp ')' '{' Exp '}' else '{' Exp '}'	  { If $3 $6 $10 }
+Exp	: true 		                                { BTrue }
+        | false                                         { BFalse }
+        | num                                           { Num $1 }
+        | Exp '+' Exp                                   { Add $1 $3 }
+	| Exp '&' Exp                                   { And $1 $3 }		
+        | '(' Exp ',' Exp ')'                           { NewPair $2 $4 }
+        | fst Exp                                       { FirstPair $2 } --ler recursivo e second
+        | snd Exp                                       { LastPair $2 } --ler recursivo e second
+        | if '(' Exp ')' '{' Exp '}' else '{' Exp '}'	{ If $3 $6 $10 }
 
 
 {
@@ -43,28 +43,28 @@ parseError _ = error "Syntax error: sequência de caracteres inválida!"
 	
 
 data Token = TokenTrue
-		|		TokenFalse
-		|		TokenNum Int
-		|		TokenPlus
-		|		TokenAnd
-    |   TokenOB
-    |   TokenCB
-    |   TokenOK
-    |   TokenCK
-    |   TokenComma
-    |   TokenFst
-    |   TokenSnd
-    |   TokenIf
-    |   TokenElse
+	|   TokenFalse
+	|   TokenNum Int
+	|   TokenPlus
+	|   TokenAnd
+        |   TokenOB
+        |   TokenCB
+        |   TokenOK
+        |   TokenCK
+        |   TokenComma
+        |   TokenFst
+        |   TokenSnd
+        |   TokenIf
+        |   TokenElse
 
 
 -- Árvore de sintaxe abstrata
 data Expr = BTrue 
     | BFalse
     | Num Int
-    | NewPair Expr Expr
-    | FirstPair Expr
-    | LastPair Expr
+    | NewPair Expr Expr -- CONSTRUTORES
+    | FirstPair Expr    -- CONSTRUTORES
+    | LastPair Expr     -- CONSTRUTORES
     | Add Expr Expr
     | And Expr Expr
     | If Expr Expr Expr
